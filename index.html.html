@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TOSM Boss Tracker</title>
+
+<style>
+body{
+background:#111;
+color:#fff;
+font-family:Arial,sans-serif;
+margin:0;
+padding:15px;
+}
+input{
+width:100%;
+padding:10px;
+margin-bottom:15px;
+border-radius:8px;
+border:none;
+}
+details{
+background:#1c1c1c;
+margin-bottom:10px;
+border-radius:10px;
+padding:10px;
+}
+summary{
+cursor:pointer;
+font-size:18px;
+font-weight:bold;
+}
+.boss{
+background:#2a2a2a;
+padding:10px;
+margin-top:8px;
+border-radius:8px;
+}
+button{
+background:#00c853;
+color:white;
+border:none;
+padding:8px;
+border-radius:6px;
+margin-top:5px;
+cursor:pointer;
+}
+.respawn{
+width:80px;
+}
+.timer{
+font-size:18px;
+font-weight:bold;
+margin-top:5px;
+}
+.ready{
+color:#00ff00;
+}
+</style>
+</head>
+<body>
+
+<h2>TOSM Boss Tracker</h2>
+
+<input type="text" id="search" placeholder="ค้นหาบอส..." onkeyup="filterBosses()">
+
+<div id="app"></div>
+
+<script>
+
+const data = {
+8:[
+["Scorpio",70],
+["Corrupted",70],
+["Blut",71],
+["Nuaele",72],
+["Dionys",73],
+["Hauberk",74]
+],
+9:[
+["Chapparition",75],
+["Devilglove",76],
+["Salamander",77],
+["Mineloader",78],
+["Helgasercle",79]
+],
+10:[
+["Glackuman",80],
+["Fire Lord",81],
+["Riteris",82],
+["Naktis",83]
+],
+11:[
+["Gaigalas",85],
+["Tetraox",86],
+["Kirmeleech",87],
+["Ferret Marauder",88],
+["Zaura",89]
+],
+12:[
+["Stone Whale",90],
+["Minotaur",91],
+["Svitrigaila",92],
+["Marnox",93]
+],
+13:[
+["Colimencia",95],
+["Sequoia",98],
+["Neop",101],
+["Nebulas",103]
+],
+14:[
+["Dionia",105],
+["Ellaganos",107],
+["Molich",109],
+["Gazing Golem",111],
+["Gesti of Destruction",113]
+],
+15:[
+["Ironbaum",115],
+["Diena",118],
+["Ginklas",120],
+["Shadowgaler",123]
+],
+16:[
+["Crabil",125],
+["Canceril",128],
+["Rajatoad",130],
+["Solcomn",133]
+]
+};
+
+const app=document.getElementById("app");
+
+for(let ep in data){
+
+let html=`
+<details open>
+<summary>Episode ${ep}</summary>
+`;
+
+data[ep].forEach(b=>{
+
+const id=b[0].replace(/\s/g,'');
+
+html+=`
+<div class="boss" data-name="${b[0].toLowerCase()}">
+<b>${b[0]}</b> (Lv.${b[1]})<br>
+
+Respawn:
+<input class="respawn" type="number"
+id="respawn_${id}" value="120">
+
+<button onclick="bossDead('${id}')">
+Boss Dead
+</button>
+
+<div class="timer" id="timer_${id}">
+00:00:00
+</div>
+</div>
+`;
+
+});
+
+html+=`</details>`;
+
+app.innerHTML+=html;
+}
+
+function bossDead(id){
+
+let mins=parseInt(
+document.getElementById("respawn_"+id).value
+);
+
+let spawn=
+Date.now()+(mins*60*1000);
+
+localStorage.setItem(
+"boss_"+id,
+spawn
+);
+
+}
+
+function updateTimers(){
+
+document.querySelectorAll(".timer")
+.forEach(el=>{
+
+let id=el.id.replace("timer_","");
+
+let spawn=
+localStorage.getItem("boss_"+id);
+
+if(!spawn) return;
+
+let diff=spawn-Date.now();
+
+if(diff<=0){
+
+el.innerHTML=
+"<span class='ready'>BOSS READY</span>";
+
+return;
+}
+
+let h=Math.floor(diff/3600000);
+let m=Math.floor((diff%3600000)/60000);
+let s=Math.floor((diff%60000)/1000);
+
+el.innerHTML=
+String(h).padStart(2,'0')+":"+
+String(m).padStart(2,'0')+":"+
+String(s).padStart(2,'0');
+
+});
+
+}
+
+function filterBosses(){
+
+let q=
+document.getElementById("search")
+.value.toLowerCase();
+
+document.querySelectorAll(".boss")
+.forEach(card=>{
+
+card.style.display=
+card.dataset.name.includes(q)
+? "block"
+: "none";
+
+});
+
+}
+
+setInterval(updateTimers,1000);
+
+</script>
+
+</body>
+</html>
