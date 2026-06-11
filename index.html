@@ -1,3 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TOSM Boss Tracker</title>
+
+<style>
+body{
+background:#111;
+color:#fff;
+font-family:Arial,sans-serif;
+margin:0;
+padding:15px;
+}
+
+input{
+padding:8px;
+border-radius:6px;
+border:none;
+}
+
+#search{
+width:100%;
+margin-bottom:15px;
+}
+
+details{
+background:#1c1c1c;
+margin-bottom:10px;
+border-radius:10px;
+padding:10px;
+}
+
+summary{
+cursor:pointer;
+font-size:18px;
+font-weight:bold;
+}
+
+.boss{
+background:#2a2a2a;
+padding:10px;
+margin-top:8px;
+border-radius:8px;
+transition:.3s;
+}
+
+button{
+background:#00c853;
+color:white;
+border:none;
+padding:8px;
+border-radius:6px;
+margin-top:5px;
+cursor:pointer;
+margin-right:5px;
+}
+
+.respawn{
+width:80px;
+}
+
+.timer{
+font-size:18px;
+font-weight:bold;
+margin-top:5px;
+}
+
+.ready{
+color:#00ff00;
+}
+</style>
+</head>
+
+<body>
+
+<h2>TOSM Boss Tracker</h2>
+
+<input
+type="text"
+id="search"
+placeholder="ค้นหาบอส...">
+
+<div id="app"></div>
+
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -84,22 +170,22 @@ const data = {
 };
 
 const bossData = {};
+const app = document.getElementById("app");
 
-const app=document.getElementById("app");
-  for(let ep in data){
+for (let ep in data){
 
-let html=`
+let html = `
 <details open>
 <summary>Episode ${ep}</summary>
 `;
 
 data[ep].forEach(b=>{
 
-const id=b[0].replace(/\s/g,'');
+const id = b[0].replace(/\s/g,'');
 
-html+=`
+html += `
 <div class="boss" data-name="${b[0].toLowerCase()}" id="card_${id}">
-<b>${b[0]}</b> (Lv.${b[1]})<br>
+<b>${b[0]}</b> (Lv.${b[1]})<br><br>
 
 Respawn:
 <input
@@ -119,34 +205,28 @@ Reset
 <div class="timer" id="timer_${id}">
 00:00:00
 </div>
-
 </div>
 `;
 
 });
 
-html+=`</details>`;
-
-app.innerHTML+=html;
-
+html += `</details>`;
+app.innerHTML += html;
 }
 
 window.bossDead = async function(id){
 
-let mins=parseInt(
-document.getElementById(
-"respawn_"+id
-).value
+const mins = parseInt(
+document.getElementById("respawn_"+id).value
 );
 
-let spawn=
-Date.now()+
-(mins*60*1000);
+const spawn =
+Date.now() + (mins * 60 * 1000);
 
 await setDoc(
 doc(db,"bosses",id),
 {
-spawn:spawn,
+spawn,
 updated:Date.now()
 }
 );
@@ -165,158 +245,107 @@ updated:Date.now()
 
 };
 
-document
-.querySelectorAll(".timer")
-.forEach(el=>{
+document.querySelectorAll(".timer").forEach(el=>{
 
-let id=
-el.id.replace("timer_","");
+const id = el.id.replace("timer_","");
 
 onSnapshot(
 doc(db,"bosses",id),
 (snapshot)=>{
 
 if(snapshot.exists()){
-
-bossData[id]=
-snapshot.data().spawn;
+bossData[id] = snapshot.data().spawn;
+}
 
 }
+);
 
 });
 
-});function updateTimers(){
+function updateTimers(){
 
-document.querySelectorAll(".timer")
-.forEach(el=>{
+document.querySelectorAll(".timer").forEach(el=>{
 
-let id=
-el.id.replace("timer_","");
-
-let spawn=
-bossData[id];
+const id = el.id.replace("timer_","");
+const spawn = bossData[id];
 
 if(!spawn || spawn===0){
-
 el.innerHTML="00:00:00";
-
 return;
 }
 
-let diff=
-spawn-Date.now();
+const diff = spawn - Date.now();
+const card = document.getElementById("card_"+id);
 
-let card=
-document.getElementById(
-"card_"+id
-);
+if(diff <= 0){
 
-if(diff<=0){
-
-card.style.background=
-"#006400";
+card.style.background="#006400";
 
 if(!el.dataset.alerted){
 
 el.dataset.alerted="1";
 
-if(
-Notification.permission
-==="granted"
-){
-new Notification(
-id+" BOSS READY!"
-);
+if(Notification.permission==="granted"){
+new Notification(id+" BOSS READY!");
 }
-
-alert(
-id+" BOSS READY!"
-);
 
 }
 
-el.innerHTML=
+el.innerHTML =
 "<span class='ready'>BOSS READY</span>";
 
 return;
 }
 
-if(diff<600000){
+el.dataset.alerted="";
 
-card.style.background=
-"#8B0000";
-
+if(diff < 600000){
+card.style.background="#8B0000";
 }else{
-
-card.style.background=
-"#2a2a2a";
-
+card.style.background="#2a2a2a";
 }
 
-let h=
-Math.floor(diff/3600000);
-
-let m=
-Math.floor(
-(diff%3600000)/60000
-);
-
-let s=
-Math.floor(
-(diff%60000)/1000
-);
+const h=Math.floor(diff/3600000);
+const m=Math.floor((diff%3600000)/60000);
+const s=Math.floor((diff%60000)/1000);
 
 el.innerHTML=
-String(h).padStart(2,'0')
-+":"
-+
-String(m).padStart(2,'0')
-+":"
-+
+String(h).padStart(2,'0')+":"+
+String(m).padStart(2,'0')+":"+
 String(s).padStart(2,'0');
 
 });
 
 }
 
-function filterBosses(){
+window.filterBosses = function(){
 
-let q=
-document
-.getElementById("search")
+const q =
+document.getElementById("search")
 .value
 .toLowerCase();
 
-document
-.querySelectorAll(".boss")
+document.querySelectorAll(".boss")
 .forEach(card=>{
 
-card.style.display=
-card.dataset.name
-.includes(q)
-?
-"block"
-:
-"none";
+card.style.display =
+card.dataset.name.includes(q)
+? "block"
+: "none";
 
 });
 
+};
+
+document
+.getElementById("search")
+.addEventListener("keyup",filterBosses);
+
+if("Notification" in window){
+Notification.requestPermission();
 }
 
-if(
-"Notification"
-in window
-){
-
-Notification
-.requestPermission();
-
-}
-
-setInterval(
-updateTimers,
-1000
-);
+setInterval(updateTimers,1000);
 
 </script>
 
