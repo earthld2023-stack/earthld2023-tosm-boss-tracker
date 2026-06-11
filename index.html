@@ -1,73 +1,25 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TOSM Boss Tracker</title>
+<script type="module">
 
-<style>
-body{
-background:#111;
-color:#fff;
-font-family:Arial,sans-serif;
-margin:0;
-padding:15px;
-}
-input{
-width:100%;
-padding:10px;
-margin-bottom:15px;
-border-radius:8px;
-border:none;
-}
-details{
-background:#1c1c1c;
-margin-bottom:10px;
-border-radius:10px;
-padding:10px;
-}
-summary{
-cursor:pointer;
-font-size:18px;
-font-weight:bold;
-}
-.boss{
-background:#2a2a2a;
-padding:10px;
-margin-top:8px;
-border-radius:8px;
-}
-button{
-background:#00c853;
-color:white;
-border:none;
-padding:8px;
-border-radius:6px;
-margin-top:5px;
-cursor:pointer;
-}
-.respawn{
-width:80px;
-}
-.timer{
-font-size:18px;
-font-weight:bold;
-margin-top:5px;
-}
-.ready{
-color:#00ff00;
-}
-</style>
-</head>
-<body>
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+getFirestore,
+doc,
+setDoc,
+onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-<h2>TOSM Boss Tracker</h2>
+const firebaseConfig = {
+apiKey: "AIzaSyAiotagGj-t2pZzY80CTaHGENlKO086FVU",
+authDomain: "tosm-boss-tracker-11543.firebaseapp.com",
+projectId: "tosm-boss-tracker-11543",
+storageBucket: "tosm-boss-tracker-11543.firebasestorage.app",
+messagingSenderId: "963741009839",
+appId: "1:963741009839:web:addb001d82657ec7af915a",
+measurementId: "G-1CT7C5GKQF"
+};
 
-<input type="text" id="search" placeholder="ค้นหาบอส..." onkeyup="filterBosses()">
-
-<div id="app"></div>
-
-<script>
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
 
 const data = {
 8:[
@@ -131,9 +83,10 @@ const data = {
 ]
 };
 
-const app=document.getElementById("app");
+const bossData = {};
 
-for(let ep in data){
+const app=document.getElementById("app");
+  for(let ep in data){
 
 let html=`
 <details open>
@@ -145,20 +98,28 @@ data[ep].forEach(b=>{
 const id=b[0].replace(/\s/g,'');
 
 html+=`
-<div class="boss" data-name="${b[0].toLowerCase()}">
+<div class="boss" data-name="${b[0].toLowerCase()}" id="card_${id}">
 <b>${b[0]}</b> (Lv.${b[1]})<br>
 
 Respawn:
-<input class="respawn" type="number"
-id="respawn_${id}" value="120">
+<input
+class="respawn"
+type="number"
+id="respawn_${id}"
+value="120">
 
 <button onclick="bossDead('${id}')">
 Boss Dead
 </button>
 
+<button onclick="resetBoss('${id}')">
+Reset
+</button>
+
 <div class="timer" id="timer_${id}">
 00:00:00
 </div>
+
 </div>
 `;
 
@@ -167,39 +128,112 @@ Boss Dead
 html+=`</details>`;
 
 app.innerHTML+=html;
+
 }
 
-function bossDead(id){
+window.bossDead = async function(id){
 
 let mins=parseInt(
-document.getElementById("respawn_"+id).value
+document.getElementById(
+"respawn_"+id
+).value
 );
 
 let spawn=
-Date.now()+(mins*60*1000);
+Date.now()+
+(mins*60*1000);
 
-localStorage.setItem(
-"boss_"+id,
-spawn
+await setDoc(
+doc(db,"bosses",id),
+{
+spawn:spawn,
+updated:Date.now()
+}
 );
+
+};
+
+window.resetBoss = async function(id){
+
+await setDoc(
+doc(db,"bosses",id),
+{
+spawn:0,
+updated:Date.now()
+}
+);
+
+};
+
+document
+.querySelectorAll(".timer")
+.forEach(el=>{
+
+let id=
+el.id.replace("timer_","");
+
+onSnapshot(
+doc(db,"bosses",id),
+(snapshot)=>{
+
+if(snapshot.exists()){
+
+bossData[id]=
+snapshot.data().spawn;
 
 }
 
-function updateTimers(){
+});
+
+});function updateTimers(){
 
 document.querySelectorAll(".timer")
 .forEach(el=>{
 
-let id=el.id.replace("timer_","");
+let id=
+el.id.replace("timer_","");
 
 let spawn=
-localStorage.getItem("boss_"+id);
+bossData[id];
 
-if(!spawn) return;
+if(!spawn || spawn===0){
 
-let diff=spawn-Date.now();
+el.innerHTML="00:00:00";
+
+return;
+}
+
+let diff=
+spawn-Date.now();
+
+let card=
+document.getElementById(
+"card_"+id
+);
 
 if(diff<=0){
+
+card.style.background=
+"#006400";
+
+if(!el.dataset.alerted){
+
+el.dataset.alerted="1";
+
+if(
+Notification.permission
+==="granted"
+){
+new Notification(
+id+" BOSS READY!"
+);
+}
+
+alert(
+id+" BOSS READY!"
+);
+
+}
 
 el.innerHTML=
 "<span class='ready'>BOSS READY</span>";
@@ -207,13 +241,38 @@ el.innerHTML=
 return;
 }
 
-let h=Math.floor(diff/3600000);
-let m=Math.floor((diff%3600000)/60000);
-let s=Math.floor((diff%60000)/1000);
+if(diff<600000){
+
+card.style.background=
+"#8B0000";
+
+}else{
+
+card.style.background=
+"#2a2a2a";
+
+}
+
+let h=
+Math.floor(diff/3600000);
+
+let m=
+Math.floor(
+(diff%3600000)/60000
+);
+
+let s=
+Math.floor(
+(diff%60000)/1000
+);
 
 el.innerHTML=
-String(h).padStart(2,'0')+":"+
-String(m).padStart(2,'0')+":"+
+String(h).padStart(2,'0')
++":"
++
+String(m).padStart(2,'0')
++":"
++
 String(s).padStart(2,'0');
 
 });
@@ -223,22 +282,41 @@ String(s).padStart(2,'0');
 function filterBosses(){
 
 let q=
-document.getElementById("search")
-.value.toLowerCase();
+document
+.getElementById("search")
+.value
+.toLowerCase();
 
-document.querySelectorAll(".boss")
+document
+.querySelectorAll(".boss")
 .forEach(card=>{
 
 card.style.display=
-card.dataset.name.includes(q)
-? "block"
-: "none";
+card.dataset.name
+.includes(q)
+?
+"block"
+:
+"none";
 
 });
 
 }
 
-setInterval(updateTimers,1000);
+if(
+"Notification"
+in window
+){
+
+Notification
+.requestPermission();
+
+}
+
+setInterval(
+updateTimers,
+1000
+);
 
 </script>
 
