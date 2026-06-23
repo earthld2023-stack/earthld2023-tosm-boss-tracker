@@ -1,134 +1,116 @@
 <!DOCTYPE html>
-
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TOSM Boss Tracker</title>
-
 <style>
-body{
-background:#111;
-color:#fff;
-font-family:Arial,sans-serif;
-margin:0;
-padding:15px;
+body {
+  background: #111;
+  color: #fff;
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 15px;
 }
-
-input{
-padding:8px;
-border-radius:6px;
-border:none;
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
 }
-
-#search{
-width:100%;
-margin-bottom:15px;
+#search {
+  width: 100%;
+  margin-bottom: 15px;
+  box-sizing: border-box;
 }
-
-.topbar{
-display:flex;
-gap:10px;
-margin-bottom:15px;
+.topbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  align-items: center;
 }
-
-.topbar button{
-background:#1976d2;
+.topbar button {
+  background: #1976d2;
 }
-
-details{
-background:#1c1c1c;
-margin-bottom:10px;
-border-radius:10px;
-padding:10px;
+details {
+  background: #1c1c1c;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 10px;
 }
-
-summary{
-cursor:pointer;
-font-size:18px;
-font-weight:bold;
+summary {
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
 }
-
-.channel-title{
-background:#333;
-padding:8px;
-border-radius:6px;
-margin-top:10px;
-font-weight:bold;
+.channel-title {
+  background: #333;
+  padding: 8px;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-weight: bold;
 }
-
-.boss{
-background:#2a2a2a;
-padding:10px;
-margin-top:8px;
-border-radius:8px;
-transition:.3s;
+.boss {
+  background: #2a2a2a;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  transition: background 0.3s;
 }
-
-button{
-background:#00c853;
-color:white;
-border:none;
-padding:8px;
-border-radius:6px;
-margin-top:5px;
-cursor:pointer;
-margin-right:5px;
+button {
+  background: #00c853;
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  margin-top: 5px;
+  cursor: pointer;
+  margin-right: 5px;
 }
-
-.respawn{
-width:80px;
+.respawn {
+  width: 80px;
 }
-
-.timer{
-font-size:18px;
-font-weight:bold;
-margin-top:5px;
+.timer {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 5px;
 }
-
-.ready{
-color:#00ff00;
+.ready {
+  color: #00ff00;
 }
 </style>
-
 </head>
-
 <body>
 
 <h2>TOSM Boss Tracker</h2>
 
 <div class="topbar">
-<button id="addChannelBtn">+ เพิ่ม Channel</button>
-<span id="channelCount">Channel : 1</span>
+  <button id="addChannelBtn">+ เพิ่ม Channel</button>
+  <span id="channelCount">Channel : 1</span>
 </div>
 
-<input
-type="text"
-id="search"
-placeholder="ค้นหาบอส...">
+<input type="text" id="search" placeholder="ค้นหาบอส...">
 
 <div id="app"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
 import {
-getFirestore,
-doc,
-setDoc,
-getDoc,
-onSnapshot
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-apiKey: "AIzaSyAiotagGj-t2pZzY80CTaHGENlKO086FVU",
-authDomain: "tosm-boss-tracker-11543.firebaseapp.com",
-projectId: "tosm-boss-tracker-11543",
-storageBucket: "tosm-boss-tracker-11543.firebasestorage.app",
-messagingSenderId: "963741009839",
-appId: "1:963741009839:web:addb001d82657ec7af915a",
-measurementId: "G-1CT7C5GKQF"
+  apiKey: "AIzaSyAiotagGj-t2pZzY80CTaHGENlKO086FVU",
+  authDomain: "tosm-boss-tracker-11543.firebaseapp.com",
+  projectId: "tosm-boss-tracker-11543",
+  storageBucket: "tosm-boss-tracker-11543.firebasestorage.app",
+  messagingSenderId: "963741009839",
+  appId: "1:963741009839:web:addb001d82657ec7af915a",
+  measurementId: "G-1CT7C5GKQF"
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
@@ -137,557 +119,143 @@ const db = getFirestore(firebaseApp);
 let totalChannels = 1;
 
 const data = {
-
-8:[
-["Scorpio",70],
-["Corrupted",70],
-["Blut",71],
-["Nuaele",72],
-["Dionys",73],
-["Hauberk",74]
-],
-
-9:[
-["Chapparition",75],
-["Devilglove",76],
-["Salamander",77],
-["Mineloader",78],
-["Helgasercle",79]
-],
-
-10:[
-["Glackuman",80],
-["Fire Lord",81],
-["Riteris",82],
-["Naktis",83]
-],
-
-11:[
-["Gaigalas",85],
-["Tetraox",86],
-["Kirmeleech",87],
-["Ferret Marauder",88],
-["Zaura",89]
-],
-
-12:[
-["Stone Whale",90],
-["Minotaur",91],
-["Svitrigaila",92],
-["Marnox",93]
-],
-
-13:[
-["Colimencia",95],
-["Sequoia",98],
-["Neop",101],
-["Nebulas",103]
-],
-
-14:[
-["Dionia",105],
-["Ellaganos",107],
-["Molich",109],
-["Gazing Golem",111],
-["Gesti of Destruction",113]
-],
-
-15:[
-["Ironbaum",115],
-["Diena",118],
-["Ginklas",120],
-["Shadowgaler",123]
-],
-
-16:[
-["Crabil",125],
-["Canceril",128],
-["Rajatoad",130],
-["Solcomn",133]
-],
-
-17:[
-["Rafane",135],
-["Templeshooter",138],
-["Lucy",140],
-["Warpulis",143]
-]
-
+  8:  [["Scorpio",70],["Corrupted",70],["Blut",71],["Nuaele",72],["Dionys",73],["Hauberk",74]],
+  9:  [["Chapparition",75],["Devilglove",76],["Salamander",77],["Mineloader",78],["Helgasercle",79]],
+  10: [["Glackuman",80],["Fire Lord",81],["Riteris",82],["Naktis",83]],
+  11: [["Gaigalas",85],["Tetraox",86],["Kirmeleech",87],["Ferret Marauder",88],["Zaura",89]],
+  12: [["Stone Whale",90],["Minotaur",91],["Svitrigaila",92],["Marnox",93]],
+  13: [["Colimencia",95],["Sequoia",98],["Neop",101],["Nebulas",103]],
+  14: [["Dionia",105],["Ellaganos",107],["Molich",109],["Gazing Golem",111],["Gesti of Destruction",113]],
+  15: [["Ironbaum",115],["Diena",118],["Ginklas",120],["Shadowgaler",123]],
+  16: [["Crabil",125],["Canceril",128],["Rajatoad",130],["Solcomn",133]],
+  17: [["Rafane",135],["Templeshooter",138],["Lucy",140],["Warpulis",143]]
 };
 
 const bossData = {};
 const app = document.getElementById("app");
-function renderBosses(){
 
-app.innerHTML = "";
+function renderBosses() {
+  app.innerHTML = "";
+  for (let ep in data) {
+    let html = `<details open><summary>Episode ${ep}</summary>`;
+    for (let ch = 1; ch <= totalChannels; ch++) {
+      html += `<div class="channel-title">Channel ${ch}</div>`;
+      data[ep].forEach(b => {
+        const bossName = b[0];
+        const level = b[1];
+        const safeId = bossName.replace(/\s/g, '') + "_CH" + ch;
+        html += `
+          <div class="boss" data-name="${bossName.toLowerCase()}" id="card_${safeId}">
+            <b>${bossName}</b> (Lv.${level})<br><br>
+            Respawn:
+            <input class="respawn" type="number" id="respawn_${safeId}" value="120">
+            <button onclick="bossDead('${safeId}')">Boss Dead</button>
+            <button onclick="resetBoss('${safeId}')">Reset</button>
+            <div class="timer" id="timer_${safeId}">00:00:00</div>
+          </div>`;
+      });
+    }
+    html += `</details>`;
+    app.innerHTML += html;
+  }
+  listenAllBosses();
+}
 
-for(let ep in data){
+async function loadChannels() {
+  const snap = await getDoc(doc(db, "settings", "channels"));
+  if (snap.exists()) {
+    totalChannels = snap.data().total || 1;
+  }
+  document.getElementById("channelCount").innerHTML = "Channel : " + totalChannels;
+  renderBosses();
+}
 
-let html = `
-
-<details open>
-<summary>Episode ${ep}</summary>
-`;
-
-for(let ch=1; ch<=totalChannels; ch++){
-
-html += `
-
-<div class="channel-title">
-Channel ${ch}
-</div>
-`;
-
-data[ep].forEach(b=>{
-
-const bossName = b[0];
-const level = b[1];
-
-const safeId =
-bossName.replace(/\s/g,'') +
-"_CH" + ch;
-
-html += `
-
-<div
-class="boss"
-data-name="${bossName.toLowerCase()}"
-id="card_${safeId}">
-
-<b>${bossName}</b>
-(Lv.${level}) <br><br>
-
-Respawn:
-
-<input
-class="respawn"
-type="number"
-id="respawn_${safeId}"
-value="120">
-
-<button
-onclick="bossDead('${safeId}')">
-Boss Dead </button>
-
-<button
-onclick="resetBoss('${safeId}')">
-Reset </button>
-
-<div
-class="timer"
-id="timer_${safeId}">
-00:00:00
-</div>
-
-</div>
-`;
-
+document.getElementById("addChannelBtn").addEventListener("click", async () => {
+  if (totalChannels >= 10) return;
+  totalChannels++;
+  await setDoc(doc(db, "settings", "channels"), { total: totalChannels });
+  document.getElementById("channelCount").innerHTML = "Channel : " + totalChannels;
+  renderBosses();
 });
 
-}
+onSnapshot(doc(db, "settings", "channels"), snapshot => {
+  if (snapshot.exists()) {
+    totalChannels = snapshot.data().total || 1;
+    document.getElementById("channelCount").innerHTML = "Channel : " + totalChannels;
+    renderBosses();
+  }
+});
 
-html += `
-
-</details>
-`;
-
-app.innerHTML += html;
-
-}
-
-listenAllBosses();
-
-}
-
-async function loadChannels(){
-
-const snap =
-await getDoc(
-doc(
-db,
-"settings",
-"channels"
-)
-);
-
-if(snap.exists()){
-
-totalChannels =
-snap.data().total || 1;
-
-}
-
-document
-.getElementById(
-"channelCount"
-)
-.innerHTML =
-"Channel : " +
-totalChannels;
-
-renderBosses();
-
-}
-
-document
-.getElementById(
-"addChannelBtn"
-)
-.addEventListener(
-"click",
-async ()=>{
-
-if(
-totalChannels >= 10
-){
-return;
-}
-
-totalChannels++;
-
-await setDoc(
-doc(
-db,
-"settings",
-"channels"
-),
-{
-total:totalChannels
-}
-);
-
-document
-.getElementById(
-"channelCount"
-)
-.innerHTML =
-"Channel : " +
-totalChannels;
-
-renderBosses();
-
-}
-);
-
-onSnapshot(
-doc(
-db,
-"settings",
-"channels"
-),
-(snapshot)=>{
-
-if(
-snapshot.exists()
-){
-
-totalChannels =
-snapshot.data().total || 1;
-
-document
-.getElementById(
-"channelCount"
-)
-.innerHTML =
-"Channel : " +
-totalChannels;
-
-renderBosses();
-
-}
-
-}
-);
-
-window.bossDead =
-async function(id){
-
-const mins =
-parseInt(
-document
-.getElementById(
-"respawn_"+id
-)
-.value
-);
-
-const spawn =
-Date.now()
-+
-(mins*60*1000);
-
-await setDoc(
-doc(
-db,
-"bosses",
-id
-),
-{
-spawn,
-updated:
-Date.now()
-}
-);
-
+window.bossDead = async function(id) {
+  const mins = parseInt(document.getElementById("respawn_" + id).value);
+  const spawn = Date.now() + (mins * 60 * 1000);
+  await setDoc(doc(db, "bosses", id), { spawn, updated: Date.now() });
 };
 
-window.resetBoss =
-async function(id){
-
-await setDoc(
-doc(
-db,
-"bosses",
-id
-),
-{
-spawn:0,
-updated:
-Date.now()
-}
-);
-
+window.resetBoss = async function(id) {
+  await setDoc(doc(db, "bosses", id), { spawn: 0, updated: Date.now() });
 };
 
-function listenAllBosses(){
-
-document
-.querySelectorAll(".timer")
-.forEach(el=>{
-
-const id =
-el.id.replace(
-"timer_",
-""
-);
-
-if(
-bossData[id]
-!== undefined
-){
-return;
+function listenAllBosses() {
+  document.querySelectorAll(".timer").forEach(el => {
+    const id = el.id.replace("timer_", "");
+    if (bossData[id] !== undefined) return;
+    onSnapshot(doc(db, "bosses", id), snapshot => {
+      bossData[id] = snapshot.exists() ? snapshot.data().spawn : 0;
+    });
+  });
 }
 
-onSnapshot(
-doc(
-db,
-"bosses",
-id
-),
-(snapshot)=>{
+function updateTimers() {
+  document.querySelectorAll(".timer").forEach(el => {
+    const id = el.id.replace("timer_", "");
+    const spawn = bossData[id];
+    const card = document.getElementById("card_" + id);
 
-if(
-snapshot.exists()
-){
+    if (!spawn || spawn === 0) {
+      el.innerHTML = "00:00:00";
+      if (card) card.style.background = "#2a2a2a";
+      return;
+    }
 
-bossData[id] =
-snapshot.data().spawn;
+    const diff = spawn - Date.now();
 
-}else{
+    if (diff <= 0) {
+      if (card) card.style.background = "#006400";
+      if (!el.dataset.alerted) {
+        el.dataset.alerted = "1";
+        if (Notification.permission === "granted") {
+          new Notification(id + " BOSS READY!");
+        }
+      }
+      el.innerHTML = "<span class='ready'>BOSS READY</span>";
+      return;
+    }
 
-bossData[id] = 0;
+    el.dataset.alerted = "";
+    if (card) card.style.background = diff < 600000 ? "#8B0000" : "#2a2a2a";
 
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    el.innerHTML = String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0');
+  });
 }
 
-}
-);
-
+document.getElementById("search").addEventListener("keyup", () => {
+  const q = document.getElementById("search").value.toLowerCase();
+  document.querySelectorAll(".boss").forEach(card => {
+    card.style.display = card.dataset.name.includes(q) ? "block" : "none";
+  });
 });
 
-}
-
-function updateTimers(){
-
-document
-.querySelectorAll(".timer")
-.forEach(el=>{
-
-const id =
-el.id.replace(
-"timer_",
-""
-);
-
-const spawn =
-bossData[id];
-
-if(
-!spawn ||
-spawn===0
-){
-
-el.innerHTML =
-"00:00:00";
-
-return;
-
-}
-
-const diff =
-spawn -
-Date.now();
-
-const card =
-document
-.getElementById(
-"card_"+id
-);
-
-if(
-diff <= 0
-){
-
-card.style.background =
-"#006400";
-
-if(
-!el.dataset.alerted
-){
-
-el.dataset.alerted =
-"1";
-
-if(
-Notification.permission
-=======================
-
-"granted"
-){
-
-new Notification(
-id +
-" BOSS READY!"
-);
-
-}
-
-}
-
-el.innerHTML =
-"<span class='ready'>BOSS READY</span>";
-
-return;
-
-}
-
-el.dataset.alerted =
-"";
-
-if(
-diff < 600000
-){
-
-card.style.background =
-"#8B0000";
-
-}else{
-
-card.style.background =
-"#2a2a2a";
-
-}
-
-const h =
-Math.floor(
-diff/3600000
-);
-
-const m =
-Math.floor(
-(diff%3600000)
-/60000
-);
-
-const s =
-Math.floor(
-(diff%60000)
-/1000
-);
-
-el.innerHTML =
-
-el.innerHTML =  el.innerHTML = String(h).padStart(2,'0') + ":" + String(m).padStart(2,'0') + ":" + String(s).padStart(2,'0'); .padStart(2,'0')  * ":"  *  String(m) .padStart(2,'0')  * ":"  *  String(s) .padStart(2,'0');
-.padStart(2,'0')
-
-* ":"
-
-*
-
-String(m)
-.padStart(2,'0')
-
-* ":"
-
-*
-
-String(s)
-.padStart(2,'0');
-
-});
-
-}
-
-window.filterBosses =
-function(){
-
-const q =
-document
-.getElementById(
-"search"
-)
-.value
-.toLowerCase();
-
-document
-.querySelectorAll(
-".boss"
-)
-.forEach(card=>{
-
-card.style.display =
-
-card.dataset.name
-.includes(q)
-
-?
-
-"block"
-
-:
-
-"none";
-
-});
-
-};
-
-document
-.getElementById(
-"search"
-)
-.addEventListener(
-"keyup",
-filterBosses
-);
-
-if(
-"Notification"
-in window
-){
-
-Notification
-.requestPermission();
-
+if ("Notification" in window) {
+  Notification.requestPermission();
 }
 
 loadChannels();
-
-setInterval(
-updateTimers,
-1000
-);
+setInterval(updateTimers, 1000);
 
 </script>
-
 </body>
 </html>
