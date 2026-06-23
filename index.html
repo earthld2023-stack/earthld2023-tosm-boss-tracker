@@ -22,15 +22,6 @@ input {
   margin-bottom: 15px;
   box-sizing: border-box;
 }
-.topbar {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-  align-items: center;
-}
-.topbar button {
-  background: #1976d2;
-}
 details {
   background: #1c1c1c;
   margin-bottom: 10px;
@@ -42,19 +33,54 @@ summary {
   font-size: 18px;
   font-weight: bold;
 }
-.channel-title {
-  background: #333;
-  padding: 8px;
-  border-radius: 6px;
-  margin-top: 10px;
-  font-weight: bold;
+.boss-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.boss {
-  background: #2a2a2a;
-  padding: 10px;
+.boss-title {
+  font-size: 15px;
+}
+.ch-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ch-controls button {
+  background: #1976d2;
+  color: white;
+  border: none;
+  padding: 3px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  margin: 0;
+}
+.ch-controls button.minus {
+  background: #c62828;
+}
+.ch-controls span {
+  font-size: 13px;
+  color: #aaa;
+  min-width: 40px;
+  text-align: center;
+}
+.boss-channels {
   margin-top: 8px;
+}
+.channel-row {
+  background: #2a2a2a;
+  padding: 8px 10px;
+  margin-top: 6px;
   border-radius: 8px;
   transition: background 0.3s;
+}
+.channel-label {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 4px;
 }
 button {
   background: #00c853;
@@ -70,9 +96,9 @@ button {
   width: 80px;
 }
 .timer {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 .ready {
   color: #00ff00;
@@ -82,25 +108,14 @@ button {
 <body>
 
 <h2>TOSM Boss Tracker</h2>
-
-<div class="topbar">
-  <button id="addChannelBtn">+ เพิ่ม Channel</button>
-  <span id="channelCount">Channel : 1</span>
-</div>
-
 <input type="text" id="search" placeholder="ค้นหาบอส...">
-
 <div id="app"></div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  onSnapshot
+  getFirestore, doc, setDoc, getDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -116,8 +131,6 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 
-let totalChannels = 1;
-
 const data = {
   8:  [["Scorpio",70],["Corrupted",70],["Blut",71],["Nuaele",72],["Dionys",73],["Hauberk",74]],
   9:  [["Chapparition",75],["Devilglove",76],["Salamander",77],["Mineloader",78],["Helgasercle",79]],
@@ -131,60 +144,84 @@ const data = {
   17: [["Rafane",135],["Templeshooter",138],["Lucy",140],["Warpulis",143]]
 };
 
+const bossChannels = {};
 const bossData = {};
-const app = document.getElementById("app");
+const appEl = document.getElementById("app");
+
+function bossKey(ep, bossName) {
+  return "EP" + ep + "_" + bossName.replace(/\s/g, '');
+}
+
+async function loadSettings() {
+  const snap = await getDoc(doc(db, "settings", "bossChannels"));
+  if (snap.exists()) {
+    Object.assign(bossChannels, snap.data());
+  }
+  renderBosses();
+}
+
+async function saveSettings() {
+  await setDoc(doc(db, "settings", "bossChannels"), { ...bossChannels });
+}
+
+window.addBossChannel = async function(key) {
+  bossChannels[key] = Math.min((bossChannels[key] || 1) + 1, 10);
+  await saveSettings();
+  renderBosses();
+};
+
+window.removeBossChannel = async function(key) {
+  bossChannels[key] = Math.max((bossChannels[key] || 1) - 1, 1);
+  await saveSettings();
+  renderBosses();
+};
 
 function renderBosses() {
-  app.innerHTML = "";
+  appEl.innerHTML = "";
+
   for (let ep in data) {
     let html = `<details open><summary>Episode ${ep}</summary>`;
-    for (let ch = 1; ch <= totalChannels; ch++) {
-      html += `<div class="channel-title">Channel ${ch}</div>`;
-      data[ep].forEach(b => {
-        const bossName = b[0];
-        const level = b[1];
-        const safeId = bossName.replace(/\s/g, '') + "_CH" + ch;
+
+    data[ep].forEach(b => {
+      const bossName = b[0];
+      const level = b[1];
+      const key = bossKey(ep, bossName);
+      const chCount = bossChannels[key] || 1;
+
+      html += `
+        <div data-name="${bossName.toLowerCase()}">
+          <div class="boss-header" style="margin-top:10px;">
+            <span class="boss-title"><b>${bossName}</b> (Lv.${level})</span>
+            <div class="ch-controls">
+              <button class="minus" onclick="removeBossChannel('${key}')">−</button>
+              <span>CH ${chCount}</span>
+              <button onclick="addBossChannel('${key}')">+</button>
+            </div>
+          </div>
+          <div class="boss-channels">`;
+
+      for (let ch = 1; ch <= chCount; ch++) {
+        const safeId = bossName.replace(/\s/g, '') + "_EP" + ep + "_CH" + ch;
         html += `
-          <div class="boss" data-name="${bossName.toLowerCase()}" id="card_${safeId}">
-            <b>${bossName}</b> (Lv.${level})<br><br>
-            Respawn:
-            <input class="respawn" type="number" id="respawn_${safeId}" value="120">
-            <button onclick="bossDead('${safeId}')">Boss Dead</button>
-            <button onclick="resetBoss('${safeId}')">Reset</button>
-            <div class="timer" id="timer_${safeId}">00:00:00</div>
-          </div>`;
-      });
-    }
+            <div class="channel-row" id="card_${safeId}">
+              <div class="channel-label">Channel ${ch}</div>
+              Respawn:
+              <input class="respawn" type="number" id="respawn_${safeId}" value="120">
+              <button onclick="bossDead('${safeId}')">Boss Dead</button>
+              <button onclick="resetBoss('${safeId}')">Reset</button>
+              <div class="timer" id="timer_${safeId}">00:00:00</div>
+            </div>`;
+      }
+
+      html += `</div></div>`;
+    });
+
     html += `</details>`;
-    app.innerHTML += html;
+    appEl.innerHTML += html;
   }
+
   listenAllBosses();
 }
-
-async function loadChannels() {
-  const snap = await getDoc(doc(db, "settings", "channels"));
-  if (snap.exists()) {
-    totalChannels = snap.data().total || 1;
-  }
-  document.getElementById("channelCount").innerHTML = "Channel : " + totalChannels;
-  renderBosses();
-}
-
-document.getElementById("addChannelBtn").addEventListener("click", async () => {
-  if (totalChannels >= 10) return;
-  totalChannels++;
-  await setDoc(doc(db, "settings", "channels"), { total: totalChannels });
-  document.getElementById("channelCount").innerHTML = "Channel : " + totalChannels;
-  renderBosses();
-});
-
-onSnapshot(doc(db, "settings", "channels"), snapshot => {
-  if (snapshot.exists()) {
-    totalChannels = snapshot.data().total || 1;
-    document.getElementById("channelCount").innerHTML = "Channel : " + totalChannels;
-    renderBosses();
-  }
-});
 
 window.bossDead = async function(id) {
   const mins = parseInt(document.getElementById("respawn_" + id).value);
@@ -244,16 +281,14 @@ function updateTimers() {
 
 document.getElementById("search").addEventListener("keyup", () => {
   const q = document.getElementById("search").value.toLowerCase();
-  document.querySelectorAll(".boss").forEach(card => {
+  document.querySelectorAll("[data-name]").forEach(card => {
     card.style.display = card.dataset.name.includes(q) ? "block" : "none";
   });
 });
 
-if ("Notification" in window) {
-  Notification.requestPermission();
-}
+if ("Notification" in window) Notification.requestPermission();
 
-loadChannels();
+loadSettings();
 setInterval(updateTimers, 1000);
 
 </script>
