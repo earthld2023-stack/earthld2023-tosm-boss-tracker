@@ -22,6 +22,42 @@ input {
   margin-bottom: 15px;
   box-sizing: border-box;
 }
+
+/* READY ZONE */
+#ready-zone {
+  display: none;
+  background: #0a2a0a;
+  border: 2px solid #00c853;
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 15px;
+}
+#ready-zone h3 {
+  margin: 0 0 8px;
+  color: #00ff00;
+  font-size: 16px;
+}
+.ready-card {
+  background: #006400;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ready-card .ready-name {
+  font-weight: bold;
+  font-size: 15px;
+  color: #00ff00;
+}
+.ready-card .ready-meta {
+  font-size: 12px;
+  color: #aaa;
+}
+
 details {
   background: #1c1c1c;
   margin-bottom: 10px;
@@ -100,7 +136,7 @@ button {
   font-weight: bold;
   margin-top: 4px;
 }
-.ready {
+.ready-text {
   color: #00ff00;
 }
 </style>
@@ -109,6 +145,13 @@ button {
 
 <h2>TOSM Boss Tracker</h2>
 <input type="text" id="search" placeholder="ค้นหาบอส...">
+
+<!-- READY ZONE -->
+<div id="ready-zone">
+  <h3>🟢 BOSS READY</h3>
+  <div id="ready-list"></div>
+</div>
+
 <div id="app"></div>
 
 <script type="module">
@@ -141,22 +184,32 @@ const data = {
   14: [["Dionia",105],["Ellaganos",107],["Molich",109],["Gazing Golem",111],["Gesti of Destruction",113]],
   15: [["Ironbaum",115],["Diena",118],["Ginklas",120],["Shadowgaler",123]],
   16: [["Crabil",125],["Canceril",128],["Rajatoad",130],["Solcomn",133]],
-  17: [["Rafane",135],["Templeshooter",138],["Lucy",140],["Warpulis",143]]
+  17: [["Rafane",135],["Templeshooter",138],["Lucy",140],["Warpulis",143]],
+  18: [["Bebraspion",145],["Moa",148],["Unicorn",150],["Reservior of Corruption",153]]
 };
 
+// id -> { bossName, level, ep, ch }
+const idMeta = {};
 const bossChannels = {};
-const bossData = {};
+const bossData = {}; // id -> spawn timestamp
+// ready order: id -> timestamp when it became ready
+const readyAt = {};
+
 const appEl = document.getElementById("app");
+const readyZone = document.getElementById("ready-zone");
+const readyList = document.getElementById("ready-list");
 
 function bossKey(ep, bossName) {
   return "EP" + ep + "_" + bossName.replace(/\s/g, '');
 }
 
+function safeId(bossName, ep, ch) {
+  return bossName.replace(/\s/g, '') + "_EP" + ep + "_CH" + ch;
+}
+
 async function loadSettings() {
   const snap = await getDoc(doc(db, "settings", "bossChannels"));
-  if (snap.exists()) {
-    Object.assign(bossChannels, snap.data());
-  }
+  if (snap.exists()) Object.assign(bossChannels, snap.data());
   renderBosses();
 }
 
@@ -201,15 +254,16 @@ function renderBosses() {
           <div class="boss-channels">`;
 
       for (let ch = 1; ch <= chCount; ch++) {
-        const safeId = bossName.replace(/\s/g, '') + "_EP" + ep + "_CH" + ch;
+        const id = safeId(bossName, ep, ch);
+        idMeta[id] = { bossName, level, ep, ch };
         html += `
-            <div class="channel-row" id="card_${safeId}">
+            <div class="channel-row" id="card_${id}">
               <div class="channel-label">Channel ${ch}</div>
               Respawn:
-              <input class="respawn" type="number" id="respawn_${safeId}" value="120">
-              <button onclick="bossDead('${safeId}')">Boss Dead</button>
-              <button onclick="resetBoss('${safeId}')">Reset</button>
-              <div class="timer" id="timer_${safeId}">00:00:00</div>
+              <input class="respawn" type="number" id="respawn_${id}" value="120">
+              <button onclick="bossDead('${id}')">Boss Dead</button>
+              <button onclick="resetBoss('${id}')">Reset</button>
+              <div class="timer" id="timer_${id}">00:00:00</div>
             </div>`;
       }
 
@@ -237,13 +291,41 @@ function listenAllBosses() {
   document.querySelectorAll(".timer").forEach(el => {
     const id = el.id.replace("timer_", "");
     if (bossData[id] !== undefined) return;
+    bossData[id] = 0;
     onSnapshot(doc(db, "bosses", id), snapshot => {
       bossData[id] = snapshot.exists() ? snapshot.data().spawn : 0;
     });
   });
 }
 
+function updateReadyZone() {
+  // collect all ready bosses sorted by readyAt time (earliest first)
+  const readyIds = Object.keys(readyAt).sort((a, b) => readyAt[a] - readyAt[b]);
+
+  if (readyIds.length === 0) {
+    readyZone.style.display = "none";
+    readyList.innerHTML = "";
+    return;
+  }
+
+  readyZone.style.display = "block";
+  readyList.innerHTML = readyIds.map(id => {
+    const meta = idMeta[id];
+    if (!meta) return "";
+    return `
+      <div class="ready-card">
+        <div>
+          <div class="ready-name">🟢 ${meta.bossName} (Lv.${meta.level})</div>
+          <div class="ready-meta">EP${meta.ep} · Channel ${meta.ch}</div>
+        </div>
+        <div style="font-size:12px;color:#aaa;">BOSS READY!</div>
+      </div>`;
+  }).join("");
+}
+
 function updateTimers() {
+  let readyChanged = false;
+
   document.querySelectorAll(".timer").forEach(el => {
     const id = el.id.replace("timer_", "");
     const spawn = bossData[id];
@@ -252,6 +334,7 @@ function updateTimers() {
     if (!spawn || spawn === 0) {
       el.innerHTML = "00:00:00";
       if (card) card.style.background = "#2a2a2a";
+      if (readyAt[id]) { delete readyAt[id]; readyChanged = true; }
       return;
     }
 
@@ -259,16 +342,19 @@ function updateTimers() {
 
     if (diff <= 0) {
       if (card) card.style.background = "#006400";
-      if (!el.dataset.alerted) {
-        el.dataset.alerted = "1";
+      if (!readyAt[id]) {
+        readyAt[id] = Date.now();
+        readyChanged = true;
         if (Notification.permission === "granted") {
-          new Notification(id + " BOSS READY!");
+          const meta = idMeta[id];
+          new Notification((meta ? meta.bossName + " CH" + meta.ch : id) + " BOSS READY!");
         }
       }
-      el.innerHTML = "<span class='ready'>BOSS READY</span>";
+      el.innerHTML = "<span class='ready-text'>BOSS READY</span>";
       return;
     }
 
+    if (readyAt[id]) { delete readyAt[id]; readyChanged = true; }
     el.dataset.alerted = "";
     if (card) card.style.background = diff < 600000 ? "#8B0000" : "#2a2a2a";
 
@@ -277,6 +363,8 @@ function updateTimers() {
     const s = Math.floor((diff % 60000) / 1000);
     el.innerHTML = String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0');
   });
+
+  if (readyChanged) updateReadyZone();
 }
 
 document.getElementById("search").addEventListener("keyup", () => {
