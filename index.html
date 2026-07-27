@@ -5,161 +5,162 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TOSM Boss Tracker</title>
 <style>
+* { box-sizing: border-box; }
 body {
-  background: #111;
-  color: #fff;
-  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #111;
+  font-family: 'Segoe UI', Arial, sans-serif;
   margin: 0;
   padding: 15px;
 }
-input {
-  padding: 8px;
-  border-radius: 6px;
-  border: none;
-}
+h2 { margin: 0 0 12px; font-size: 22px; font-weight: 500; }
 #search {
   width: 100%;
-  margin-bottom: 15px;
-  box-sizing: border-box;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 14px;
 }
-
-/* READY ZONE */
 #ready-zone {
   display: none;
-  background: #0a2a0a;
-  border: 2px solid #00c853;
-  border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 15px;
+  background: #f0faf4;
+  border: 1px solid #b2dfca;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 14px;
 }
-#ready-zone h3 {
-  margin: 0 0 8px;
-  color: #00ff00;
-  font-size: 16px;
-}
+#ready-zone h3 { margin: 0 0 8px; font-size: 12px; color: #2e7d52; letter-spacing: 0.5px; text-transform: uppercase; font-weight: 500; }
 .ready-card {
-  background: #006400;
-  padding: 8px 12px;
-  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #b2dfca;
+  border-radius: 10px;
+  padding: 10px 14px;
   margin-top: 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  flex-wrap: wrap;
 }
-.ready-card .ready-name {
-  font-weight: bold;
-  font-size: 15px;
-  color: #00ff00;
-}
-.ready-card .ready-meta {
-  font-size: 12px;
-  color: #aaa;
-}
+.ready-name { font-size: 16px; font-weight: 500; color: #1b5e38; }
+.ready-meta { font-size: 12px; color: #888; margin-top: 2px; }
+.ready-elapsed { font-size: 22px; font-weight: 500; color: #e67e00; font-variant-numeric: tabular-nums; text-align: right; }
+.ready-elapsed span { display: block; font-size: 10px; color: #aaa; font-weight: 400; }
 
 details {
-  background: #1c1c1c;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 12px;
   margin-bottom: 10px;
-  border-radius: 10px;
-  padding: 10px;
 }
 summary {
   cursor: pointer;
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 24px;
+  font-weight: 500;
+  color: #111;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+summary::before { content: '▶'; font-size: 12px; color: #999; transition: transform 0.2s; }
+details[open] summary::before { transform: rotate(90deg); }
+
 .boss-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
+  margin-top: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
 }
-.boss-title {
-  font-size: 15px;
-}
-.ch-controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.boss-title { font-size: 20px; font-weight: 500; color: #111; }
+.boss-lv { font-size: 14px; color: #999; font-weight: 400; }
+
+.ch-controls { display: flex; align-items: center; gap: 6px; }
 .ch-controls button {
-  background: #1976d2;
-  color: white;
-  border: none;
-  padding: 3px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-  margin: 0;
+  background: #e8f0fe; color: #1a56c4;
+  border: none; width: 28px; height: 28px;
+  border-radius: 6px; cursor: pointer; font-size: 16px; margin: 0;
+  display: flex; align-items: center; justify-content: center;
 }
-.ch-controls button.minus {
-  background: #c62828;
+.ch-controls button.minus { background: #fde8e8; color: #c41a1a; }
+.ch-controls span { font-size: 12px; color: #999; min-width: 36px; text-align: center; }
+
+.boss-channels { margin-top: 6px; }
+.channel-row {
+  background: #fafafa;
+  border: 1px solid #ebebeb;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 6px;
+  border-left: 3px solid #ddd;
+  transition: background 0.3s, border-color 0.3s;
 }
-.ch-controls span {
-  font-size: 13px;
-  color: #aaa;
-  min-width: 40px;
+.channel-row.state-ready { background: #f0faf4; border-left-color: #34a868; }
+.channel-row.state-soon { background: #fff5f5; border-left-color: #e53935; }
+.channel-label { font-size: 11px; color: #bbb; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.row-controls { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.respawn-label { font-size: 13px; color: #999; }
+
+.respawn-input {
+  width: 90px; padding: 5px 8px;
+  border-radius: 6px; border: 1px solid #ddd;
+  background: #fff; font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
   text-align: center;
 }
-.boss-channels {
+.respawn-input:focus { outline: none; border-color: #1a56c4; }
+.respawn-input.invalid { border-color: #e53935; background: #fff5f5; }
+.respawn-hint { font-size: 11px; color: #bbb; }
+
+.btn-dead {
+  background: #34a868; color: #fff;
+  border: none; padding: 6px 14px;
+  border-radius: 6px; cursor: pointer;
+  font-size: 13px; font-weight: 500;
+}
+.btn-reset {
+  background: #f0f0f0; color: #555;
+  border: none; padding: 6px 12px;
+  border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+
+.timer-display {
   margin-top: 8px;
+  font-size: 40px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+  color: #bbb;
+  line-height: 1;
 }
-.channel-row {
-  background: #2a2a2a;
-  padding: 8px 10px;
-  margin-top: 6px;
-  border-radius: 8px;
-  transition: background 0.3s;
-}
-.channel-label {
-  font-size: 12px;
-  color: #aaa;
-  margin-bottom: 4px;
-}
-button {
-  background: #00c853;
-  color: white;
-  border: none;
-  padding: 8px;
-  border-radius: 6px;
-  margin-top: 5px;
-  cursor: pointer;
-  margin-right: 5px;
-}
-.respawn {
-  width: 80px;
-}
-.timer {
-  font-size: 16px;
-  font-weight: bold;
-  margin-top: 4px;
-}
-.ready-text {
-  color: #00ff00;
-}
+.timer-display.t-ready { font-size: 22px; color: #34a868; }
+.timer-display.t-soon { color: #e53935; }
+.timer-display.t-normal { color: #1a56c4; }
 </style>
 </head>
 <body>
 
 <h2>TOSM Boss Tracker</h2>
-<input type="text" id="search" placeholder="ค้นหาบอส...">
+<input type="text" id="search" placeholder="🔍 ค้นหาบอส...">
 
-<!-- READY ZONE -->
 <div id="ready-zone">
-  <h3>🟢 BOSS READY</h3>
+  <h3>Boss ready</h3>
   <div id="ready-list"></div>
 </div>
 
 <div id="app"></div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore, doc, setDoc, getDoc, onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAiotagGj-t2pZzY80CTaHGENlKO086FVU",
@@ -188,23 +189,25 @@ const data = {
   18: [["Bebraspion",145],["Moa",148],["Unicorn",150],["Reservior of Corruption",153]]
 };
 
-// id -> { bossName, level, ep, ch }
-const idMeta = {};
-const bossChannels = {};
-const bossData = {}; // id -> spawn timestamp
-// ready order: id -> timestamp when it became ready
-const readyAt = {};
-
+const idMeta = {}, bossChannels = {}, bossData = {}, readyAt = {};
 const appEl = document.getElementById("app");
 const readyZone = document.getElementById("ready-zone");
 const readyList = document.getElementById("ready-list");
 
-function bossKey(ep, bossName) {
-  return "EP" + ep + "_" + bossName.replace(/\s/g, '');
+function bossKey(ep, name) { return "EP" + ep + "_" + name.replace(/\s/g, ''); }
+function safeId(name, ep, ch) { return name.replace(/\s/g, '') + "_EP" + ep + "_CH" + ch; }
+
+// แปลง HH:MM:SS หรือ MM:SS หรือ SS เป็นวินาที
+function parseTime(str) {
+  str = str.trim();
+  const parts = str.split(":").map(p => parseInt(p) || 0);
+  if (parts.length === 3) return parts[0]*3600 + parts[1]*60 + parts[2];
+  if (parts.length === 2) return parts[0]*60 + parts[1];
+  return parts[0];
 }
 
-function safeId(bossName, ep, ch) {
-  return bossName.replace(/\s/g, '') + "_EP" + ep + "_CH" + ch;
+function isValidTime(str) {
+  return /^\d{1,2}(:\d{1,2}){0,2}$/.test(str.trim()) && parseTime(str) > 0;
 }
 
 async function loadSettings() {
@@ -212,39 +215,36 @@ async function loadSettings() {
   if (snap.exists()) Object.assign(bossChannels, snap.data());
   renderBosses();
 }
-
 async function saveSettings() {
   await setDoc(doc(db, "settings", "bossChannels"), { ...bossChannels });
 }
 
 window.addBossChannel = async function(key) {
   bossChannels[key] = Math.min((bossChannels[key] || 1) + 1, 10);
-  await saveSettings();
-  renderBosses();
+  await saveSettings(); renderBosses();
 };
-
 window.removeBossChannel = async function(key) {
   bossChannels[key] = Math.max((bossChannels[key] || 1) - 1, 1);
-  await saveSettings();
-  renderBosses();
+  await saveSettings(); renderBosses();
+};
+
+window.validateInput = function(id) {
+  const el = document.getElementById("respawn_" + id);
+  el.classList.toggle("invalid", !isValidTime(el.value));
 };
 
 function renderBosses() {
   appEl.innerHTML = "";
-
   for (let ep in data) {
     let html = `<details open><summary>Episode ${ep}</summary>`;
-
     data[ep].forEach(b => {
-      const bossName = b[0];
-      const level = b[1];
+      const [bossName, level] = b;
       const key = bossKey(ep, bossName);
       const chCount = bossChannels[key] || 1;
-
       html += `
         <div data-name="${bossName.toLowerCase()}">
-          <div class="boss-header" style="margin-top:10px;">
-            <span class="boss-title"><b>${bossName}</b> (Lv.${level})</span>
+          <div class="boss-header">
+            <span class="boss-title">${bossName} <span class="boss-lv">Lv.${level}</span></span>
             <div class="ch-controls">
               <button class="minus" onclick="removeBossChannel('${key}')">−</button>
               <span>CH ${chCount}</span>
@@ -252,35 +252,35 @@ function renderBosses() {
             </div>
           </div>
           <div class="boss-channels">`;
-
       for (let ch = 1; ch <= chCount; ch++) {
         const id = safeId(bossName, ep, ch);
         idMeta[id] = { bossName, level, ep, ch };
         html += `
-            <div class="channel-row" id="card_${id}">
-              <div class="channel-label">Channel ${ch}</div>
-              Respawn:
-              <input class="respawn" type="number" id="respawn_${id}" value="120">
-              <button onclick="bossDead('${id}')">Boss Dead</button>
-              <button onclick="resetBoss('${id}')">Reset</button>
-              <div class="timer" id="timer_${id}">00:00:00</div>
-            </div>`;
+          <div class="channel-row" id="card_${id}">
+            <div class="channel-label">Channel ${ch}</div>
+            <div class="row-controls">
+              <span class="respawn-label">Respawn</span>
+              <input class="respawn-input" type="text" id="respawn_${id}" value="2:00:00" placeholder="ชม:นาที:วิ" oninput="validateInput('${id}')">
+              <span class="respawn-hint">ชม:นาที:วิ</span>
+              <button class="btn-dead" onclick="bossDead('${id}')">Boss Dead</button>
+              <button class="btn-reset" onclick="resetBoss('${id}')">Reset</button>
+            </div>
+            <div class="timer-display" id="timer_${id}">00:00:00</div>
+          </div>`;
       }
-
       html += `</div></div>`;
     });
-
     html += `</details>`;
     appEl.innerHTML += html;
   }
-
   listenAllBosses();
 }
 
 window.bossDead = async function(id) {
-  const mins = parseInt(document.getElementById("respawn_" + id).value);
-  const spawn = Date.now() + (mins * 60 * 1000);
-  await setDoc(doc(db, "bosses", id), { spawn, updated: Date.now() });
+  const el = document.getElementById("respawn_" + id);
+  if (!isValidTime(el.value)) { el.classList.add("invalid"); return; }
+  const secs = parseTime(el.value);
+  await setDoc(doc(db, "bosses", id), { spawn: Date.now() + secs * 1000, updated: Date.now() });
 };
 
 window.resetBoss = async function(id) {
@@ -288,97 +288,94 @@ window.resetBoss = async function(id) {
 };
 
 function listenAllBosses() {
-  document.querySelectorAll(".timer").forEach(el => {
+  document.querySelectorAll(".timer-display").forEach(el => {
     const id = el.id.replace("timer_", "");
     if (bossData[id] !== undefined) return;
     bossData[id] = 0;
-    onSnapshot(doc(db, "bosses", id), snapshot => {
-      bossData[id] = snapshot.exists() ? snapshot.data().spawn : 0;
+    onSnapshot(doc(db, "bosses", id), snap => {
+      bossData[id] = snap.exists() ? snap.data().spawn : 0;
     });
   });
 }
 
+function fmtElapsed(ms) {
+  const t = Math.floor(ms / 1000);
+  return "+" + String(Math.floor(t / 60)).padStart(2,'0') + ":" + String(t % 60).padStart(2,'0');
+}
+
 function updateReadyZone() {
-  // collect all ready bosses sorted by readyAt time (earliest first)
-  const readyIds = Object.keys(readyAt).sort((a, b) => readyAt[a] - readyAt[b]);
-
-  if (readyIds.length === 0) {
-    readyZone.style.display = "none";
-    readyList.innerHTML = "";
-    return;
-  }
-
+  const ids = Object.keys(readyAt).sort((a,b) => readyAt[a] - readyAt[b]);
+  if (!ids.length) { readyZone.style.display = "none"; readyList.innerHTML = ""; return; }
   readyZone.style.display = "block";
-  readyList.innerHTML = readyIds.map(id => {
-    const meta = idMeta[id];
-    if (!meta) return "";
-    return `
-      <div class="ready-card">
-        <div>
-          <div class="ready-name">🟢 ${meta.bossName} (Lv.${meta.level})</div>
-          <div class="ready-meta">EP${meta.ep} · Channel ${meta.ch}</div>
-        </div>
-        <div style="font-size:12px;color:#aaa;">BOSS READY!</div>
-      </div>`;
+  readyList.innerHTML = ids.map(id => {
+    const m = idMeta[id]; if (!m) return "";
+    return `<div class="ready-card" id="rcard_${id}">
+      <div>
+        <div class="ready-name">${m.bossName} <span style="font-size:13px;color:#888;font-weight:400;">Lv.${m.level}</span></div>
+        <div class="ready-meta">EP${m.ep} · Channel ${m.ch}</div>
+      </div>
+      <div class="ready-elapsed" id="relapsed_${id}">${fmtElapsed(Date.now()-readyAt[id])}<span>online แล้ว</span></div>
+    </div>`;
   }).join("");
 }
 
 function updateTimers() {
-  let readyChanged = false;
-
-  document.querySelectorAll(".timer").forEach(el => {
+  let changed = false;
+  document.querySelectorAll(".timer-display").forEach(el => {
     const id = el.id.replace("timer_", "");
     const spawn = bossData[id];
     const card = document.getElementById("card_" + id);
 
     if (!spawn || spawn === 0) {
-      el.innerHTML = "00:00:00";
-      if (card) card.style.background = "#2a2a2a";
-      if (readyAt[id]) { delete readyAt[id]; readyChanged = true; }
+      el.innerHTML = "00:00:00"; el.className = "timer-display";
+      if (card) card.classList.remove("state-ready","state-soon");
+      if (readyAt[id]) { delete readyAt[id]; changed = true; }
       return;
     }
 
     const diff = spawn - Date.now();
-
     if (diff <= 0) {
-      if (card) card.style.background = "#006400";
       if (!readyAt[id]) {
-        readyAt[id] = Date.now();
-        readyChanged = true;
+        readyAt[id] = Date.now(); changed = true;
         if (Notification.permission === "granted") {
-          const meta = idMeta[id];
-          new Notification((meta ? meta.bossName + " CH" + meta.ch : id) + " BOSS READY!");
+          const m = idMeta[id];
+          new Notification((m ? m.bossName + " CH" + m.ch : id) + " BOSS READY!");
         }
       }
-      el.innerHTML = "<span class='ready-text'>BOSS READY</span>";
+      if (card) { card.classList.add("state-ready"); card.classList.remove("state-soon"); }
+      el.className = "timer-display t-ready";
+      el.innerHTML = "✦ BOSS READY ✦";
       return;
     }
 
-    if (readyAt[id]) { delete readyAt[id]; readyChanged = true; }
-    el.dataset.alerted = "";
-    if (card) card.style.background = diff < 600000 ? "#8B0000" : "#2a2a2a";
+    if (readyAt[id]) { delete readyAt[id]; changed = true; }
+    const soon = diff < 600000;
+    if (card) { card.classList.toggle("state-soon", soon); card.classList.remove("state-ready"); }
+    el.className = "timer-display " + (soon ? "t-soon" : "t-normal");
 
-    const h = Math.floor(diff / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    el.innerHTML = String(h).padStart(2, '0') + ":" + String(m).padStart(2, '0') + ":" + String(s).padStart(2, '0');
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    const s = Math.floor((diff%60000)/1000);
+    el.innerHTML = String(h).padStart(2,'0')+":"+String(m).padStart(2,'0')+":"+String(s).padStart(2,'0');
   });
 
-  if (readyChanged) updateReadyZone();
+  if (changed) updateReadyZone();
+  Object.keys(readyAt).forEach(id => {
+    const el = document.getElementById("relapsed_" + id);
+    if (el) el.childNodes[0].textContent = fmtElapsed(Date.now() - readyAt[id]);
+  });
 }
 
 document.getElementById("search").addEventListener("keyup", () => {
   const q = document.getElementById("search").value.toLowerCase();
-  document.querySelectorAll("[data-name]").forEach(card => {
-    card.style.display = card.dataset.name.includes(q) ? "block" : "none";
+  document.querySelectorAll("[data-name]").forEach(c => {
+    c.style.display = c.dataset.name.includes(q) ? "block" : "none";
   });
 });
 
 if ("Notification" in window) Notification.requestPermission();
-
 loadSettings();
 setInterval(updateTimers, 1000);
-
 </script>
 </body>
 </html>
